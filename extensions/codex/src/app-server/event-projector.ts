@@ -10,6 +10,7 @@ import {
   type EmbeddedRunAttemptResult,
   type MessagingToolSend,
 } from "openclaw/plugin-sdk/agent-harness-runtime";
+import { readCodexTurn } from "./protocol-validators.js";
 import {
   isJsonObject,
   type CodexServerNotification,
@@ -18,7 +19,6 @@ import {
   type JsonObject,
   type JsonValue,
 } from "./protocol.js";
-import { readCodexTurn } from "./protocol-validators.js";
 
 export type CodexAppServerToolTelemetry = {
   didSendViaMessagingTool: boolean;
@@ -109,6 +109,10 @@ export class CodexAppServerEventProjector {
       case "item/autoApprovalReview/started":
       case "item/autoApprovalReview/completed":
         this.handleGuardianReviewNotification(notification.method, params);
+        break;
+      case "hook/started":
+      case "hook/completed":
+        this.handleHookNotification(notification.method, params);
         break;
       case "thread/tokenUsage/updated":
         this.handleTokenUsage(params);
@@ -400,6 +404,34 @@ export class CodexAppServerEventProjector {
     });
   }
 
+  private handleHookNotification(method: string, params: JsonObject): void {
+    const run = isJsonObject(params.run) ? params.run : undefined;
+    if (!run) {
+      return;
+    }
+    const durationMs = readNumberLike(run, "durationMs");
+    const entries = readHookOutputEntries(run.entries);
+    this.emitAgentEvent({
+      stream: "codex_app_server.hook",
+      data: {
+        phase: method === "hook/started" ? "started" : "completed",
+        threadId: this.threadId,
+        turnId: this.turnId,
+        hookRunId: readString(run, "id"),
+        eventName: readString(run, "eventName"),
+        handlerType: readString(run, "handlerType"),
+        executionMode: readString(run, "executionMode"),
+        scope: readString(run, "scope"),
+        source: readString(run, "source"),
+        sourcePath: readString(run, "sourcePath"),
+        status: readString(run, "status"),
+        statusMessage: readNullableString(run, "statusMessage"),
+        ...(durationMs !== undefined ? { durationMs } : {}),
+        ...(entries.length > 0 ? { entries } : {}),
+      },
+    });
+  }
+
   private async handleTurnCompleted(params: JsonObject): Promise<void> {
     const turn = readTurn(params.turn);
     if (!turn || turn.id !== this.turnId) {
@@ -624,6 +656,37 @@ function readNullableString(record: JsonObject, key: string): string | null | un
 function readNumber(record: JsonObject, key: string): number | undefined {
   const value = record[key];
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function readNumberLike(record: JsonObject, key: string): number | undefined {
+  const value = record[key];
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function readHookOutputEntries(
+  value: JsonValue | undefined,
+): Array<{ kind?: string; text: string }> {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.flatMap((entry) => {
+    if (!isJsonObject(entry)) {
+      return [];
+    }
+    const text = readString(entry, "text");
+    if (!text) {
+      return [];
+    }
+    const kind = readString(entry, "kind");
+    return [{ ...(kind ? { kind } : {}), text }];
+  });
 }
 
 function readFirstJsonObject(record: JsonObject, keys: readonly string[]): JsonObject | undefined {

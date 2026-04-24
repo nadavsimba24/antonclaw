@@ -568,4 +568,67 @@ describe("CodexAppServerEventProjector", () => {
       }),
     );
   });
+
+  it("projects codex hook started and completed notifications into agent events", async () => {
+    const onAgentEvent = vi.fn();
+    const params = await createParams();
+    const projector = await createProjector({ ...params, onAgentEvent });
+
+    await projector.handleNotification(
+      forCurrentTurn("hook/started", {
+        run: {
+          id: "hook-1",
+          eventName: "preToolUse",
+          handlerType: "command",
+          executionMode: "sync",
+          scope: "turn",
+          source: "project",
+          sourcePath: "/repo/.codex/hooks.json",
+          status: "running",
+          statusMessage: null,
+          entries: [],
+        },
+      }),
+    );
+    await projector.handleNotification(
+      forCurrentTurn("hook/completed", {
+        run: {
+          id: "hook-1",
+          eventName: "preToolUse",
+          handlerType: "command",
+          executionMode: "sync",
+          scope: "turn",
+          source: "project",
+          sourcePath: "/repo/.codex/hooks.json",
+          status: "blocked",
+          statusMessage: "blocked by hook",
+          durationMs: 42,
+          entries: [{ kind: "stderr", text: "blocked" }],
+        },
+      }),
+    );
+
+    expect(onAgentEvent).toHaveBeenCalledWith({
+      stream: "codex_app_server.hook",
+      data: expect.objectContaining({
+        phase: "started",
+        threadId: THREAD_ID,
+        turnId: TURN_ID,
+        hookRunId: "hook-1",
+        eventName: "preToolUse",
+        status: "running",
+      }),
+    });
+    expect(onAgentEvent).toHaveBeenCalledWith({
+      stream: "codex_app_server.hook",
+      data: expect.objectContaining({
+        phase: "completed",
+        hookRunId: "hook-1",
+        status: "blocked",
+        statusMessage: "blocked by hook",
+        durationMs: 42,
+        entries: [{ kind: "stderr", text: "blocked" }],
+      }),
+    });
+  });
 });
