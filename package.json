@@ -2,7 +2,16 @@
   "name": "antonclaw",
   "version": "2026.4.24",
   "description": "AntónClaw — Gilfoyle's unholy daemon. OpenClaw fork with Monday.com, n8n, QGIS/PostGIS and full provider freedom (DeepSeek, Groq, Kimi, Anthropic, Ollama).",
-  "keywords": ["antonclaw", "openclaw", "ai-agent", "monday", "n8n", "qgis", "deepseek", "groq"],
+  "keywords": [
+    "ai-agent",
+    "antonclaw",
+    "deepseek",
+    "groq",
+    "monday",
+    "n8n",
+    "openclaw",
+    "qgis"
+  ],
   "homepage": "https://github.com/nadavsimba24/antonclaw#readme",
   "bugs": {
     "url": "https://github.com/nadavsimba24/antonclaw/issues"
@@ -1279,6 +1288,7 @@
     "android:test": "cd apps/android && ./gradlew :app:testPlayDebugUnitTest",
     "android:test:integration": "OPENCLAW_LIVE_TEST=1 OPENCLAW_LIVE_ANDROID_NODE=1 node scripts/run-vitest.mjs run --config test/vitest/vitest.live.config.ts src/gateway/android-node.capabilities.live.test.ts",
     "android:test:third-party": "cd apps/android && ./gradlew :app:testThirdPartyDebugUnitTest",
+    "antonclaw:update": "git pull origin main && pnpm install && pnpm build && echo \"\n🦞 AntónClaw updated successfully!\"",
     "audit:seams": "node scripts/audit-seams.mjs",
     "build": "node scripts/build-all.mjs",
     "build:ci-artifacts": "node scripts/build-all.mjs ciArtifacts",
