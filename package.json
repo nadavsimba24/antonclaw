@@ -1,19 +1,20 @@
 {
-  "name": "openclaw",
+  "name": "antonclaw",
   "version": "2026.4.24",
-  "description": "Multi-channel AI gateway with extensible messaging integrations",
-  "keywords": [],
-  "homepage": "https://github.com/openclaw/openclaw#readme",
+  "description": "AntónClaw — Gilfoyle's unholy daemon. OpenClaw fork with Monday.com, n8n, QGIS/PostGIS and full provider freedom (DeepSeek, Groq, Kimi, Anthropic, Ollama).",
+  "keywords": ["antonclaw", "openclaw", "ai-agent", "monday", "n8n", "qgis", "deepseek", "groq"],
+  "homepage": "https://github.com/nadavsimba24/antonclaw#readme",
   "bugs": {
-    "url": "https://github.com/openclaw/openclaw/issues"
+    "url": "https://github.com/nadavsimba24/antonclaw/issues"
   },
   "license": "MIT",
-  "author": "",
+  "author": "AntónClaw contributors",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openclaw/openclaw.git"
+    "url": "git+https://github.com/nadavsimba24/antonclaw.git"
   },
   "bin": {
+    "antonclaw": "openclaw.mjs",
     "openclaw": "openclaw.mjs"
   },
   "directories": {
