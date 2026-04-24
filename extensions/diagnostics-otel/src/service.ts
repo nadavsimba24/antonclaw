@@ -134,9 +134,7 @@ function findLogTraceContext(
 
 function traceFlagsToOtel(traceFlags: string | undefined): TraceFlags {
   const parsed = Number.parseInt(traceFlags ?? "00", 16);
-  return (parsed & TraceFlags.SAMPLED) === TraceFlags.SAMPLED
-    ? TraceFlags.SAMPLED
-    : TraceFlags.NONE;
+  return (parsed & TraceFlags.SAMPLED) !== 0 ? TraceFlags.SAMPLED : TraceFlags.NONE;
 }
 
 function addTraceAttributes(
