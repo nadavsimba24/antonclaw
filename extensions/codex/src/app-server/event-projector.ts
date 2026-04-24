@@ -82,7 +82,14 @@ export class CodexAppServerEventProjector {
 
   async handleNotification(notification: CodexServerNotification): Promise<void> {
     const params = isJsonObject(notification.params) ? notification.params : undefined;
-    if (!params || !this.isNotificationForTurn(params)) {
+    if (!params) {
+      return;
+    }
+    if (isHookNotificationMethod(notification.method)) {
+      if (!this.isHookNotificationForCurrentThread(params)) {
+        return;
+      }
+    } else if (!this.isNotificationForTurn(params)) {
       return;
     }
 
@@ -411,12 +418,13 @@ export class CodexAppServerEventProjector {
     }
     const durationMs = readNumber(run, "durationMs");
     const entries = readHookOutputEntries(run.entries);
+    const hookTurnId = readNullableString(params, "turnId");
     this.emitAgentEvent({
       stream: "codex_app_server.hook",
       data: {
         phase: method === "hook/started" ? "started" : "completed",
         threadId: this.threadId,
-        turnId: this.turnId,
+        turnId: hookTurnId === undefined ? this.turnId : hookTurnId,
         hookRunId: readString(run, "id"),
         eventName: readString(run, "eventName"),
         handlerType: readString(run, "handlerType"),
@@ -629,6 +637,16 @@ export class CodexAppServerEventProjector {
     const turnId = readNotificationTurnId(params);
     return threadId === this.threadId && turnId === this.turnId;
   }
+
+  private isHookNotificationForCurrentThread(params: JsonObject): boolean {
+    const threadId = readString(params, "threadId");
+    const turnId = params.turnId;
+    return threadId === this.threadId && (turnId === this.turnId || turnId === null);
+  }
+}
+
+function isHookNotificationMethod(method: string): method is "hook/started" | "hook/completed" {
+  return method === "hook/started" || method === "hook/completed";
 }
 
 function readNotificationTurnId(record: JsonObject): string | undefined {

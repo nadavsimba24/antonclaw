@@ -631,4 +631,42 @@ describe("CodexAppServerEventProjector", () => {
       }),
     });
   });
+
+  it("projects thread-scoped codex hook notifications that omit a turn id", async () => {
+    const onAgentEvent = vi.fn();
+    const params = await createParams();
+    const projector = await createProjector({ ...params, onAgentEvent });
+
+    await projector.handleNotification({
+      method: "hook/started",
+      params: {
+        threadId: THREAD_ID,
+        turnId: null,
+        run: {
+          id: "hook-thread-1",
+          eventName: "sessionStart",
+          handlerType: "command",
+          executionMode: "sync",
+          scope: "thread",
+          source: "project",
+          sourcePath: "/repo/.codex/hooks.json",
+          status: "running",
+          statusMessage: null,
+          entries: [],
+        },
+      },
+    });
+
+    expect(onAgentEvent).toHaveBeenCalledWith({
+      stream: "codex_app_server.hook",
+      data: expect.objectContaining({
+        phase: "started",
+        threadId: THREAD_ID,
+        turnId: null,
+        hookRunId: "hook-thread-1",
+        eventName: "sessionStart",
+        scope: "thread",
+      }),
+    });
+  });
 });
