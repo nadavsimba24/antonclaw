@@ -897,6 +897,10 @@ Official external npm entries should prefer an exact `npmSpec` plus
 `expectedIntegrity`. Bare package names and dist-tags still work for
 compatibility, but they surface source-plane warnings so the catalog can move
 toward pinned, integrity-checked installs without breaking existing plugins.
+When onboarding installs from a local catalog path, it records a
+`plugins.installs` entry with `source: "path"`, `sourcePath`, and `installPath`
+alongside the linked load path. This keeps local development installs visible to
+source-plane diagnostics instead of only hiding them in `plugins.load.paths`.
 
 ## Context engine plugins
 

@@ -116,6 +116,21 @@ function addPluginLoadPath(cfg: OpenClawConfig, pluginPath: string): OpenClawCon
   };
 }
 
+function recordLocalPluginInstall(params: {
+  cfg: OpenClawConfig;
+  entry: OnboardingPluginInstallEntry;
+  localPath: string;
+  npmSpec?: string | null;
+}): OpenClawConfig {
+  return recordPluginInstall(params.cfg, {
+    pluginId: params.entry.pluginId,
+    source: "path",
+    sourcePath: params.localPath,
+    installPath: params.localPath,
+    ...(params.npmSpec ? { spec: params.npmSpec } : {}),
+  });
+}
+
 function resolveLocalPath(params: {
   entry: OnboardingPluginInstallEntry;
   workspaceDir?: string;
@@ -439,6 +454,7 @@ export async function ensureOnboardingPluginInstalled(params: {
       };
     }
     next = addPluginLoadPath(enableResult.config, localPath);
+    next = recordLocalPluginInstall({ cfg: next, entry, localPath, npmSpec });
     return {
       cfg: next,
       installed: true,
@@ -554,6 +570,7 @@ export async function ensureOnboardingPluginInstalled(params: {
         };
       }
       next = addPluginLoadPath(enableResult.config, localPath);
+      next = recordLocalPluginInstall({ cfg: next, entry, localPath, npmSpec });
       return {
         cfg: next,
         installed: true,
