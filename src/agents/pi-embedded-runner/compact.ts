@@ -77,7 +77,6 @@ import { registerProviderStreamForModel } from "../provider-stream.js";
 import { ensureRuntimePluginsLoaded } from "../runtime-plugins.js";
 import { resolveSandboxContext } from "../sandbox.js";
 import { repairSessionFileIfNeeded } from "../session-file-repair.js";
-import { guardSessionManager } from "../session-tool-result-guard-wrapper.js";
 import { sanitizeToolUseResultPairing } from "../session-transcript-repair.js";
 import {
   acquireSessionWriteLock,
@@ -770,14 +769,7 @@ export async function compactEmbeddedPiSessionDirect(
         env: process.env,
         model,
       });
-      const sessionManager = guardSessionManager(SessionManager.open(params.sessionFile), {
-        agentId: sessionAgentId,
-        sessionKey: params.sessionKey,
-        config: params.config,
-        contextWindowTokens: ctxInfo.tokens,
-        allowSyntheticToolResults: transcriptPolicy.allowSyntheticToolResults,
-        allowedToolNames,
-      });
+      const sessionManager = SessionManager.open(params.sessionFile);
       checkpointSnapshot = captureCompactionCheckpointSnapshot({
         sessionManager,
         sessionFile: params.sessionFile,
@@ -1154,7 +1146,9 @@ export async function compactEmbeddedPiSessionDirect(
           try {
             await flushPendingToolResultsAfterIdle({
               agent: session?.agent,
-              sessionManager,
+              // SessionManager no longer wraps ToolResultFlushManager (guard
+              // wrapper removed); flush becomes a no-op.
+              sessionManager: null,
               clearPendingOnTimeout: true,
             });
           } catch {

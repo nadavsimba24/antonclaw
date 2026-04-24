@@ -615,10 +615,9 @@ export async function handleMessageEnd(
       if (decision && isTerminalBlock) {
         ctx.state.inlineLlmOutputFired = true;
         const blockedOriginalText = cleanedText;
+        const blockDecision = decision.decision as { message?: string; reason?: string };
         const rawReplacement =
-          decision.decision.replacementMessage ??
-          decision.decision.reason ??
-          "Response withheld — blocked by policy.";
+          blockDecision.message ?? blockDecision.reason ?? "Response withheld — blocked by policy.";
         // Match the BLOCK_RUN styling so all hook-block replies render with
         // the same affordance: warning glyph, "Agent failed" prefix, and the
         // logs hint. Avoid double-prefixing if the plugin already used it.
@@ -636,7 +635,7 @@ export async function handleMessageEnd(
         try {
           await ctx.params.onInlineLlmOutputBlock?.({
             replacementMessage: replacement,
-            reason: decision.decision.reason ?? "blocked",
+            reason: blockDecision.reason ?? "blocked",
             pluginId: decision.pluginId,
             blockedAssistantText: blockedOriginalText,
           });
